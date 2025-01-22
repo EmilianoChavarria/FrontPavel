@@ -1,5 +1,4 @@
 import { Button } from 'flowbite-react'
-import { header } from 'framer-motion/client'
 import React from 'react'
 
 export const Navbar = ({ title = "Mis Proyectos" }) => {
