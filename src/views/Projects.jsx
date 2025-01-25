@@ -31,7 +31,6 @@ export const Projects = () => {
         return <Spinner aria-label="Extra large spinner example" size="xl" />;
     }
 
-    // Ensure data is an array before trying to map over it
     if (!Array.isArray(data)) {
         return <div>Error: Data is not an array or could not be fetched.</div>;
     }

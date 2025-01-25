@@ -2,9 +2,10 @@ import { Badge, Progress } from "flowbite-react";
 import React, { useState, useEffect, useRef } from "react";
 import { HiCheck, HiClock } from "react-icons/hi";
 import moment from 'moment';
+import { Link } from "react-router-dom";
 
 
-export const CardProject = ({ project }) => {
+export const CardProject = ({ project, prop }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -14,9 +15,17 @@ export const CardProject = ({ project }) => {
         setIsDropdownOpen((prevState) => !prevState);
     };
 
-    const validateDate = () => {
-        project.end_date
-    }
+    const determineBadge = (endDate, percentage) => {
+        const currentDate = moment();
+        const finalDate = moment(endDate);
+
+        if (finalDate.isBefore(currentDate, 'day') && percentage < 100) {
+            return { color: "failure", text: "Atrasado", icon: HiClock };
+        } else if (finalDate.isSameOrAfter(currentDate, 'day')) {
+            return { color: "warning", text: "En proceso", icon: HiClock };
+        }
+    };
+
 
     useEffect(() => {
 
@@ -35,10 +44,11 @@ export const CardProject = ({ project }) => {
 
     }, []);
 
+    const badgeInfo = determineBadge(project.end_date, project.completion_percentage);
 
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow p-5">
+        <Link to={`/project/${project.id}`} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow p-5 cursor-pointer">
             <div className="flex flex-col">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600 cursor-pointer">{project.name}</h3>
@@ -110,11 +120,13 @@ export const CardProject = ({ project }) => {
                         <span className="text-sm text-gray-600">    {moment(project.start_date).format('ll')} - {moment(project.end_date).format('ll')}
                         </span>
                     </div>
-                    <Badge color="warning" size="sm" icon={HiClock}>En proceso</Badge>
+                    <Badge color={badgeInfo.color} size="sm" icon={badgeInfo.icon}>
+                        {badgeInfo.text}
+                    </Badge>
                 </div>
 
 
             </div>
-        </div>
+        </Link>
     );
 };
