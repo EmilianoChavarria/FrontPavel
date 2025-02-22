@@ -2,33 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from '../shared/Navbar';
 import { CardProject } from '../components/CardProject';
 import { Spinner } from 'flowbite-react';
+import { URL } from '../../environments/global';
 
-export const Projects = () => {
-    const [data, setData] = useState(null);
+export const Projects = ({ refreshProjects, setRefreshProjects }) => {
+    const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Función para cargar los proyectos
+    const fetchData = async () => {
+        try {
+            const response = await fetch(`${URL}/getAll`);
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            const result = await response.json();
+            console.log(result);
+            return result.projects; // Devuelve los proyectos
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+            setError(error);
+            return []; // Devuelve un array vacío en caso de error
+        }
+    };
+
+    // Efecto para cargar los proyectos al montar el componente y cuando cambie refreshProjects
     useEffect(() => {
-        const URL = 'http://127.0.0.1:8000/getAll';
-        const fetchData = async () => {
+        const loadProjects = async () => {
+            setLoading(true); // Activar el estado de carga
             try {
-                const response = await fetch(URL);
-                const result = await response.json();
-                console.log(result);
-                setData(result.projects);
-                setLoading(false);
+                const projects = await fetchData(); // Obtener los proyectos desde la API
+                setData(projects); // Asignar los proyectos al estado
             } catch (error) {
-                console.log(error);
-                setError(error);
-                setLoading(false);
+                console.error("Error al cargar los proyectos: ", error);
+                setError(error); // Asignar el error al estado
+            } finally {
+                setLoading(false); // Desactivar el estado de carga
             }
         };
 
-        fetchData();
-    }, []);
+        loadProjects();
+    }, [refreshProjects]); // Dependencia: refreshProjects
 
     if (loading) {
         return <Spinner aria-label="Extra large spinner example" size="xl" />;
+    }
+
+    if (error) {
+        return <div>Error: {error.message}</div>;
     }
 
     if (!Array.isArray(data)) {

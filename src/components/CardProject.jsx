@@ -15,16 +15,41 @@ export const CardProject = ({ project, prop }) => {
         setIsDropdownOpen((prevState) => !prevState);
     };
 
+
+    //Preguntar a Pavel si quiere "Completado con retraso" o "Atrasado"
+
+    // const determineBadge = (endDate, percentage) => {
+    //     const currentDate = moment();
+    //     const finalDate = moment(endDate);
+    //     console.log(finalDate)
+    //     if (percentage >= 100) {
+    //         if (finalDate.isBefore(currentDate, 'day')) {
+    //             return { color: "warning", text: "Completado con retraso", icon: HiClock };
+    //         } else {
+    //             return { color: "success", text: "Completado", icon: HiCheck };
+    //         }
+    //     } else if (finalDate.isBefore(currentDate, 'day')) {
+    //         return { color: "failure", text: "Atrasado", icon: HiClock };
+    //     } else if (finalDate.isSameOrAfter(currentDate, 'day')) {
+    //         return { color: "warning", text: "En proceso", icon: HiClock };
+    //     }
+    // };
+
     const determineBadge = (endDate, percentage) => {
         const currentDate = moment();
         const finalDate = moment(endDate);
+        console.log(finalDate)
+        if (percentage >= 100) {
 
-        if (finalDate.isBefore(currentDate, 'day') && percentage < 100) {
+            return { color: "success", text: "Completado", icon: HiCheck };
+        } else if (finalDate.isBefore(currentDate, 'day')) {
             return { color: "failure", text: "Atrasado", icon: HiClock };
         } else if (finalDate.isSameOrAfter(currentDate, 'day')) {
             return { color: "warning", text: "En proceso", icon: HiClock };
         }
     };
+
+
 
 
     useEffect(() => {
@@ -48,10 +73,12 @@ export const CardProject = ({ project, prop }) => {
 
 
     return (
-        <Link to={`/project/${project.id}`} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow p-5 cursor-pointer">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow p-5 cursor-pointer">
             <div className="flex flex-col">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600 cursor-pointer">{project.name}</h3>
+                    <Link to={`/project/${project.id}`} onClick={() => {
+                        localStorage.setItem('projectName', JSON.stringify(project))
+                    }} className="text-lg font-medium text-gray-900 hover:text-blue-600 cursor-pointer">{project.name}</Link>
                     <div ref={dropdownRef} className="aboslute">
                         <button
                             id="dropdownMenuIconButton"
@@ -127,6 +154,6 @@ export const CardProject = ({ project, prop }) => {
 
 
             </div>
-        </Link>
+        </div>
     );
 };
