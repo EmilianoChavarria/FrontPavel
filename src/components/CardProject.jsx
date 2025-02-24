@@ -79,7 +79,7 @@ export const CardProject = ({ project, onProjectUpdate }) => {
                 });
                 onProjectUpdate();
                 setOpenModal(false);
-                
+
             }
         } catch (error) {
             console.error("Error: ", error.message);
@@ -88,6 +88,56 @@ export const CardProject = ({ project, onProjectUpdate }) => {
             Swal.fire({
                 title: 'Error',
                 text: error.message || 'Ocurrió un error al actualizar el proyecto.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+        }
+    };
+
+    const deleteProject = async (id) => {
+        try {
+            // Mostrar alerta de confirmación
+            const confirmResult = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Deseas eliminar este proyecto?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+            });
+
+            // Si el usuario confirma, proceder con la eliminación
+            if (confirmResult.isConfirmed) {
+                const response = await fetch(`${URL}/deleteProject/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorMessage}`);
+                }
+
+                const result = await response.json();
+                console.log("Response: ", result);
+
+                // Mostrar alerta de éxito
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonText: 'Aceptar'
+                });
+                onProjectUpdate();
+            }
+        } catch (error) {
+            console.error("Error: ", error.message);
+
+            // Mostrar alerta de error
+            Swal.fire({
+                title: 'Error',
+                text: error.message || 'Ocurrió un error al eliminar el proyecto.',
                 icon: 'error',
                 confirmButtonText: 'Aceptar'
             });
@@ -258,7 +308,11 @@ export const CardProject = ({ project, onProjectUpdate }) => {
                                             </a>
                                         </li>
                                         <li>
-                                            <a onClick={toggleDropdown}
+                                            <a onClick={() => {
+                                                toggleDropdown;
+                                                deleteProject(project.id);
+                                            }
+                                            }
                                                 href="#"
                                                 className="text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                                             >
