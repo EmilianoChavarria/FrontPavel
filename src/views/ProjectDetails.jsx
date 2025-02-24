@@ -2,10 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { URL } from '../../environments/global';
 import { useParams } from 'react-router-dom';
 import { CategoryCard } from '../components/CategoryCard';
-import { Tabs } from 'flowbite-react';
-import { FaChartGantt } from "react-icons/fa6";
-import { RxActivityLog } from "react-icons/rx";
-import { GanttChart } from '../components/GanttChart';
+import arrow from '../assets/img/arrow.png'
 
 export const ProjectDetails = ({ refreshCategories, setRefreshCategories }) => {
     const [data, setData] = useState([]);
@@ -42,15 +39,24 @@ export const ProjectDetails = ({ refreshCategories, setRefreshCategories }) => {
     return (
         <div className="h-full w-full">
             <div className="overflow-x-auto h-full">
-                <div className="grid grid-flow-col auto-cols-[calc(100%/3)] gap-6">
-                    {data.map((category, index) => (
-                        <CategoryCard
-                            key={index}
-                            category={category}
-                            className="bg-white border border-gray-200 rounded-lg p-4"
-                        />
-                    ))}
-                </div>
+                {
+                    data.length === 0 ? (
+                        <div className='w-full flex justify-center items-start'>
+                            <span className="text-xl text-gray-500 mt-1">No hay categorías registradas, por favor agrega una.</span>
+                            
+                        </div>
+                    ) : (
+                        <div className="grid grid-flow-col auto-cols-[calc(100%/3)] gap-6">
+                            {data.map((category, index) => (
+                                <CategoryCard
+                                    key={index}
+                                    category={category}
+                                    className="bg-white border border-gray-200 rounded-lg p-4"
+                                />
+                            ))}
+                        </div>
+                    )
+                }
             </div>
         </div>
     );

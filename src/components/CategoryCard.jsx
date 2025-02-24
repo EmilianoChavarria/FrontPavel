@@ -1,5 +1,5 @@
 import { div, tr } from 'framer-motion/client';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CardActivity } from './CardActivity';
 import { Accordion, Badge, Button, Checkbox, FloatingLabel, Label, Modal, Select } from 'flowbite-react';
 import moment from 'moment';
@@ -172,6 +172,25 @@ export const CategoryCard = ({ category }) => {
         setActivityObject(null); // Resetea el objeto de la actividad
 
     };
+
+
+    //controlar opne-close del menu de acciones por categoría
+    useEffect(() => {
+
+
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+
+
+
+    }, []);
 
     return (
         <div className="bg-[#ffffff] border border-gray-200 rounded-lg hover:shadow-xl px-4 py-4 h-fit">

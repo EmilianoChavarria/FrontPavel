@@ -26,23 +26,27 @@ export const Projects = ({ refreshProjects, setRefreshProjects }) => {
         }
     };
 
-    // Efecto para cargar los proyectos al montar el componente y cuando cambie refreshProjects
+    
+    const handleProjectUpdate = () => {
+        setRefreshProjects(prev => !prev); 
+    };
+
     useEffect(() => {
         const loadProjects = async () => {
-            setLoading(true); // Activar el estado de carga
+            setLoading(true);
             try {
-                const projects = await fetchData(); // Obtener los proyectos desde la API
-                setData(projects); // Asignar los proyectos al estado
+                const projects = await fetchData();
+                setData(projects);
             } catch (error) {
                 console.error("Error al cargar los proyectos: ", error);
-                setError(error); // Asignar el error al estado
+                setError(error); 
             } finally {
-                setLoading(false); // Desactivar el estado de carga
+                setLoading(false); 
             }
         };
 
         loadProjects();
-    }, [refreshProjects]); // Dependencia: refreshProjects
+    }, [refreshProjects]);
 
     if (loading) {
         return <Spinner aria-label="Extra large spinner example" size="xl" />;
@@ -57,10 +61,24 @@ export const Projects = ({ refreshProjects, setRefreshProjects }) => {
     }
 
     return (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {data.map((project, index) => (
-                <CardProject key={index} project={project} />
-            ))}
-        </div>
+        <>
+            {
+                data.length === 0 ? (
+                    <div className='w-full flex justify-center items-start'>
+                        <span className="text-xl text-gray-500 mt-1">No hay proyectos registrados, por favor agrega uno.</span>
+                    </div>
+                ) : (
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                        {data.map((project, index) => (
+                            <CardProject 
+                                key={index} 
+                                project={project} 
+                                onProjectUpdate={handleProjectUpdate}
+                            />
+                        ))}
+                    </div>
+                )
+            }
+        </>
     );
 };

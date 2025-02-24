@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom';
-import { Button, Modal, FloatingLabel } from 'flowbite-react';
+import { Button, Modal, FloatingLabel, Textarea } from 'flowbite-react';
 import { IoIosArrowRoundBack } from 'react-icons/io';
 import { URL } from '../../environments/global';
 
@@ -17,7 +17,7 @@ export const Navbar = ({ setRefreshProjects, setRefreshCategories }) => {
     // Efecto para actualizar el título según la página
     useEffect(() => {
         if (isProjectPage) {
-            setTitle("Status del proyecto");
+            setTitle("Categorías del proyecto");
         } else {
             setTitle("Mis Proyectos");
         }
@@ -164,7 +164,7 @@ export const Navbar = ({ setRefreshProjects, setRefreshCategories }) => {
                         <Modal.Body>
                             <form onSubmit={handleSubmit}>
                                 <FloatingLabel variant="outlined" label="Name" name="name" value={formProjectData.name} onChange={handleChange} />
-                                <FloatingLabel variant="outlined" label="Description" name="description" value={formProjectData.description} onChange={handleChange} />
+                                <Textarea variant="outlined" placeholder="Descripción delproyecto" label="Description" name="description" value={formProjectData.description} onChange={handleChange} />
                                 <div className='flex items-center justify-between'>
                                     <div className='flex flex-col max-w-[48%] w-full'>
                                         <label htmlFor="" className='text-gray-600'>Fecha de inicio</label>
