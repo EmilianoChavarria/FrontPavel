@@ -1,5 +1,5 @@
 import { div, tr } from 'framer-motion/client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { CardActivity } from './CardActivity';
 import { Accordion, Badge, Button, Checkbox, FloatingLabel, Label, Modal, Select } from 'flowbite-react';
 import moment from 'moment';
@@ -173,8 +173,6 @@ export const CategoryCard = ({ category }) => {
 
     };
 
-
-    //controlar opne-close del menu de acciones por categoría
     useEffect(() => {
 
 
