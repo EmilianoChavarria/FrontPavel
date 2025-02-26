@@ -1,5 +1,5 @@
 import { div, tr } from 'framer-motion/client';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CardActivity } from './CardActivity';
 import { Accordion, Badge, Button, Checkbox, FloatingLabel, Label, Modal, Select } from 'flowbite-react';
 import moment from 'moment';
@@ -12,19 +12,22 @@ import { SubactivityRow } from './SubactivityRow';
 import { ModalActivity } from './Activities/ModalActivity';
 import { act } from 'react-dom/test-utils';
 
-export const CategoryCard = ({ category }) => {
+export const CategoryCard = ({ category, onCategoryUpdate }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
     const [openModal, setOpenModal] = useState(false);
     const [openActivityModal, setOpenActivityModal] = useState(false);
     const [openActivityOneModal, setOpenActivityOneModal] = useState(false);
     const [activityObject, setActivityObject] = useState(null);
-    
+    const [openModalEditAct, setOpenModalEditAct] = useState();
+
     const [responsibles, setResponsibles] = useState([]);
     const [categoryId, setCategoryId] = useState(null);
     const [deliverables, setDeliverables] = useState([]); // Estado para los deliverables
     const [currentDeliverable, setCurrentDeliverable] = useState(''); // Estado temporal para el input
     // const [responsibleId, setResponsibleId] = useState('');
+    const [idCat, setIdCat] = useState();
+
     const [formActivityData, setFormActivityData] = useState({
         category_id: '',
         name: '',
@@ -35,6 +38,8 @@ export const CategoryCard = ({ category }) => {
         dependencies: '',
         deliverables: '',
     });
+    const id = location.pathname.split('/')[2];
+
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -59,7 +64,7 @@ export const CategoryCard = ({ category }) => {
         }
     };
 
-    
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -160,7 +165,7 @@ export const CategoryCard = ({ category }) => {
 
 
     // TODO: Borrar por si no jala
-    
+
 
     // TODO: Controlar el estado del modal
     const handleOpenModal = () => {
@@ -171,6 +176,181 @@ export const CategoryCard = ({ category }) => {
         setOpenActivityOneModal(false); // Cierra el modal
         setActivityObject(null); // Resetea el objeto de la actividad
 
+    };
+
+    //TODO: Sección de categories
+
+    const [formCategoryData, setFormCategoryData] = useState({
+        name: '',
+        description: '',
+        project_id: id
+    });
+
+
+
+    const fetchOneCategory = async (id) => {
+        try {
+            setIsLoading(true)
+            const response = await fetch(`${URL}/findOneCategory/${id}`);
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            const result = await response.json();
+            console.log(result)
+            setIsLoading(false);
+            return result.categoryInfo[0];
+        } catch (error) {
+            return null;
+        }
+    }
+
+    const openModalFunction = async (id) => {
+        setOpenModalEditAct(true);
+        console.log(id);
+        setIdCat(id);
+        const categoryInfo = await fetchOneCategory(id);
+        console.log(categoryInfo);
+        if (categoryInfo) {
+
+            setFormCategoryData({
+                name: categoryInfo.name || '',
+                description: categoryInfo.description || ''
+            });
+
+
+        } else {
+            console.log("No se encontró información del proyecto.");
+        }
+    }
+
+    const handleCategoryChange = (e) => {
+        const { name, value } = e.target;
+        setFormCategoryData({
+            ...formCategoryData,
+            [name]: value
+        });
+    };
+
+    const handleCategorySubmit = async (e) => {
+        e.preventDefault();
+        console.log("Datos enviados: ", formCategoryData);
+        await updateCategory(formCategoryData);
+
+        // setFormProjectData({
+        //     name: '',
+        //     description: '',
+        //     start_date: '',
+        //     end_date: ''
+        // });
+
+        // Cerrar el modal después de enviar el formulario
+        // setOpenModal(false);
+    };
+
+    const updateCategory = async (data) => {
+        try {
+            // Mostrar alerta de confirmación
+            const confirmResult = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Deseas actualizar esta categoría?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, actualizar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+            });
+
+            // Si el usuario confirma, proceder con la actualización
+            if (confirmResult.isConfirmed) {
+                const response = await fetch(`${URL}/updateCategory/${idCat}`, {
+                    method: 'PUT',
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorMessage}`);
+                }
+
+                const result = await response.json();
+                console.log("Response: ", result);
+
+                // Mostrar alerta de éxito
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonText: 'Aceptar'
+                });
+                onCategoryUpdate();
+                setOpenModalEditAct(false);
+
+            }
+        } catch (error) {
+            console.error("Error: ", error.message);
+
+            // Mostrar alerta de error
+            Swal.fire({
+                title: 'Error',
+                text: error.message || 'Ocurrió un error al actualizar el proyecto.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+        }
+    };
+
+    const deleteCategory = async (id) => {
+        try {
+            // Mostrar alerta de confirmación
+            const confirmResult = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Deseas eliminar esta categoría?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+            });
+
+            // Si el usuario confirma, proceder con la eliminación
+            if (confirmResult.isConfirmed) {
+                const response = await fetch(`${URL}/deleteCategory/${id}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorMessage}`);
+                }
+
+                const result = await response.json();
+                console.log("Response: ", result);
+
+                // Mostrar alerta de éxito
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonText: 'Aceptar'
+                });
+                onCategoryUpdate();
+            }
+        } catch (error) {
+            console.error("Error: ", error.message);
+
+            // Mostrar alerta de error
+            Swal.fire({
+                title: 'Error',
+                text: error.message || 'Ocurrió un error al eliminar el proyecto.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+        }
     };
 
     useEffect(() => {
@@ -240,7 +420,12 @@ export const CategoryCard = ({ category }) => {
                                     </li>
                                     <li>
                                         <a
-                                            onClick={toggleDropdown}
+                                            onClick={() => {
+
+                                                toggleDropdown;
+                                                openModalFunction(category.id);
+                                            }
+                                            }
                                             href="#"
                                             className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                                         >
@@ -249,7 +434,12 @@ export const CategoryCard = ({ category }) => {
                                     </li>
                                     <li>
                                         <a
-                                            onClick={toggleDropdown}
+                                            onClick={
+                                                () => {
+                                                    deleteCategory(category.id);
+                                                    toggleDropdown;
+                                                }
+                                            }
                                             href="#"
                                             className="text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                                         >
@@ -286,9 +476,24 @@ export const CategoryCard = ({ category }) => {
             </div>
 
 
-            
 
 
+
+            {/* Modal editar coetgoría */}
+            <Modal dismissible show={openModalEditAct} onClose={() => setOpenModalEditAct(false)}>
+
+                <Modal.Header>Editar categoría</Modal.Header>
+                <Modal.Body>
+                    <form onSubmit={handleCategorySubmit}>
+                        <FloatingLabel variant="outlined" label="Nombre" name="name" value={formCategoryData.name} onChange={handleCategoryChange} />
+                        <FloatingLabel variant="outlined" label="Descripcion" name="description" value={formCategoryData.description} onChange={handleCategoryChange} />
+
+
+                        <Button type='submit' className='mt-5'>Editar categoría</Button>
+
+                    </form>
+                </Modal.Body>
+            </Modal>
 
 
             {/* Modal para agregar actividad */}

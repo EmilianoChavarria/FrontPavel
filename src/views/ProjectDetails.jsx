@@ -26,6 +26,10 @@ export const ProjectDetails = ({ refreshCategories, setRefreshCategories }) => {
         }
     };
 
+    const handleCategorytUpdate = () => {
+        setRefreshCategories(prev => !prev); 
+    };
+
     useEffect(() => {
 
 
@@ -51,6 +55,8 @@ export const ProjectDetails = ({ refreshCategories, setRefreshCategories }) => {
                                 <CategoryCard
                                     key={index}
                                     category={category}
+                                    onCategoryUpdate={handleCategorytUpdate}
+
                                     className="bg-white border border-gray-200 rounded-lg p-4"
                                 />
                             ))}
