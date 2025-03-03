@@ -4,6 +4,7 @@ import { Projects } from '../views/Projects'
 import { ErrorPage } from '../views/ErrorPage'
 import { ProjectDetails } from '../views/ProjectDetails'
 import { GanttChart } from '../components/GanttChart'
+import { ManagePersonal } from '../components/personal/managePersonal'
 
 export const AppRoutes = ({ refreshProjects, setRefreshProjects, refreshCategories, setRefreshCategories }) => {
     return (
@@ -11,6 +12,7 @@ export const AppRoutes = ({ refreshProjects, setRefreshProjects, refreshCategori
             <Route path='/' element={<Projects refreshProjects={refreshProjects} setRefreshProjects={setRefreshProjects} />} />
             <Route path='/project/:projectId' element={<ProjectDetails refreshCategories={refreshCategories} setRefreshCategories={setRefreshCategories} />} />
             <Route path='/gantt/:projectId' element={<GanttChart />} />
+            <Route path='/responsibles' element={<ManagePersonal />} />
 
             {/* Ruta por si no encuentra las demás */}
             <Route path="*" element={<ErrorPage />} />
