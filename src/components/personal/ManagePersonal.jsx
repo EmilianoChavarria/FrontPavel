@@ -1,11 +1,144 @@
-import { Button, Table } from 'flowbite-react'
-import React from 'react'
+import { Button, FloatingLabel, Label, Modal, Select, Table } from 'flowbite-react';
+import React, { useState, useEffect } from 'react';
+import { URL } from '../../../environments/global';
 
 export const ManagePersonal = () => {
+  const [data, setData] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
+
+  const [openModal, setOpenModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    department_id: '',
+    position_id: '',
+    role_id: '',
+  });
+
+  // Traer los responsables
+  const fetchData = async () => {
+    try {
+      const response = await fetch(`${URL}/getAllUsers`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+      setData(result.users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  // Traer los roles
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch(`${URL}/getRoles`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+      console.log('Roles:', result.roles);
+      setRoles(result.roles);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  // Traer los roles
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch(`${URL}/getDepartments`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+      console.log('Departamentos:', result.departments);
+      setDepartments(result.departments);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  // Traer los roles
+  const fetchPositions = async () => {
+    try {
+      const response = await fetch(`${URL}/getPositions`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+      console.log('Positions:', result.positions);
+      setPositions(result.positions);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const openModalHandler = () => {
+    setOpenModal(true);
+    fetchDepartments();
+    fetchRoles();
+    fetchPositions();
+  }
+
+  useEffect(() => {
+
+
+    fetchData();
+
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('Form data:', formData);
+    try {
+      const response = await fetch(`${URL}/saveUser`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+  
+      const result = await response.json();
+      console.log('User created successfully:', result);
+  
+      setFormData({
+        user_name: '',
+        email: '',
+        department_id: '',
+        position_id: '',
+        role_id: '',
+      });
+  
+      setOpenModal(false);
+  
+      fetchData();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
+  };
+
   return (
     <>
-      <Button>Agregar Responsable</Button>
-      <Table hoverable className='mt-10'>
+      <Button onClick={() => {
+        openModalHandler();
+      }}>Agregar Responsable</Button>
+      <Table hoverable className="mt-10">
         <Table.Head>
           <Table.HeadCell>Nombre</Table.HeadCell>
           <Table.HeadCell>Email</Table.HeadCell>
@@ -14,47 +147,105 @@ export const ManagePersonal = () => {
           <Table.HeadCell>Acciones</Table.HeadCell>
         </Table.Head>
         <Table.Body className="divide-y">
-          <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-            <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-              {'Apple MacBook Pro 17"'}
-            </Table.Cell>
-            <Table.Cell>Sliver</Table.Cell>
-            <Table.Cell>Laptop</Table.Cell>
-            <Table.Cell>$2999</Table.Cell>
-            <Table.Cell>
-              <a href="#" className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
-                Edit
-              </a>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-            <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-              Microsoft Surface Pro
-            </Table.Cell>
-            <Table.Cell>White</Table.Cell>
-            <Table.Cell>Laptop PC</Table.Cell>
-            <Table.Cell>$1999</Table.Cell>
-            <Table.Cell>
-              <a href="#" className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
-                Edit
-              </a>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-            <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">Magic Mouse 2</Table.Cell>
-            <Table.Cell>Black</Table.Cell>
-            <Table.Cell>Accessories</Table.Cell>
-            <Table.Cell>$99</Table.Cell>
-            <Table.Cell>
-              <a href="#" className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
-                Edit
-              </a>
-            </Table.Cell>
-          </Table.Row>
+          {data.map((user, index) => (
+            <Table.Row key={index} className="bg-white dark:border-gray-700 dark:bg-gray-800">
+              <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                {user.user_name}
+              </Table.Cell>
+              <Table.Cell>{user.email}</Table.Cell>
+              <Table.Cell>{user.department_name}</Table.Cell>
+              <Table.Cell>{user.position_name}</Table.Cell>
+              <Table.Cell className='flex gap-x-4'>
+                <Button color='yellow'>Editar</Button>
+                <Button color='red'>Eliminar</Button>
+              </Table.Cell>
+            </Table.Row>
+          ))}
         </Table.Body>
       </Table>
+
+      {/* Modal para agregar actividad */}
+      <Modal dismissible show={openModal} onClose={() => setOpenModal(false)}>
+        <Modal.Header>Agregar actividad</Modal.Header>
+        <Modal.Body>
+          <form onSubmit={handleSubmit}>
+            <FloatingLabel
+              variant="outlined"
+              label="Nombre"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+            <FloatingLabel
+              variant="outlined"
+              label="Email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+
+            <div className="mt-2">
+              {/* <div className="mb-2 block">
+                <Label htmlFor="countries" value="Responsable de la actividad" />
+              </div> */}
+              <Select
+                id="roles"
+                name="role_id"
+                value={formData.role_id || ''}
+                onChange={(e) => {
+                  handleChange(e);
+                }}
+              >
+                <option value="" disabled>Seleccione un rol</option>
+                {roles?.map((role) => (
+                  <option key={role.id} value={role.id}>{role.name}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="mt-2">
+              {/* <div className="mb-2 block">
+                <Label htmlFor="countries" value="Responsable de la actividad" />
+              </div> */}
+              <Select
+                id="departments"
+                name="department_id"
+                value={formData.department_id || ''}
+                onChange={(e) => {
+                  handleChange(e);
+                }}
+              >
+                <option value="" disabled>Seleccione un departamento</option>
+                {departments?.map((department) => (
+                  <option key={department.id} value={department.id}>{department.name}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="mt-2">
+              {/* <div className="mb-2 block">
+                <Label htmlFor="countries" value="Responsable de la actividad" />
+              </div> */}
+              <Select
+                id="positions"
+                name="position_id"
+                value={formData.position_id || ''}
+                onChange={(e) => {
+                  handleChange(e);
+                }}
+              >
+                <option value="" disabled>Seleccione un cargo</option>
+                {positions.map((position) => (
+                  <option key={position.id} value={position.id}>{position.title}</option>
+                ))}
+              </Select>
+            </div>
+
+
+            <Button type="submit" className="mt-5">
+              Registrar proyecto
+            </Button>
+          </form>
+        </Modal.Body>
+      </Modal >
     </>
-
-
-  )
-}
+  );
+};
