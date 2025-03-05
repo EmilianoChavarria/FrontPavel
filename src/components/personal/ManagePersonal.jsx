@@ -5,6 +5,7 @@ import { URL } from '../../../environments/global';
 export const ManagePersonal = () => {
   const [data, setData] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
 
@@ -26,6 +27,32 @@ export const ManagePersonal = () => {
       }
       const result = await response.json();
       setData(result.users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  // FindOne user
+  const fetchFindOne = async (id) => {
+    try {
+      // console.log(`${URL}/findOneUser/${id}`)
+      const response = await fetch(`${URL}/findOneUser/${id}`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+      // setData(result.user);
+      console.log(result.user[0]);
+      const object = result.user[0];
+      setIsEditing(true);
+      openModalHandler();
+      setFormData({
+        name: object.name,
+        email: object.email,
+        department_id: object.department_id,
+        position_id: object.position_id,
+        role_id: object.role_id,
+      })
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -88,7 +115,7 @@ export const ManagePersonal = () => {
 
     fetchData();
 
-  }, []);
+  }, [isEditing]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -102,32 +129,62 @@ export const ManagePersonal = () => {
     e.preventDefault();
     console.log('Form data:', formData);
     try {
-      const response = await fetch(`${URL}/saveUser`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      if (isEditing) {
+        const response = await fetch(`${URL}/saveUser`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('User created successfully:', result);
+
+        setFormData({
+          user_name: '',
+          email: '',
+          department_id: '',
+          position_id: '',
+          role_id: '',
+        });
+
+        setOpenModal(false);
+
+        fetchData();
+      } else {
+        const response = await fetch(`${URL}/saveUser`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('User created successfully:', result);
+
+        setFormData({
+          user_name: '',
+          email: '',
+          department_id: '',
+          position_id: '',
+          role_id: '',
+        });
+
+        setOpenModal(false);
+
+        fetchData();
       }
-  
-      const result = await response.json();
-      console.log('User created successfully:', result);
-  
-      setFormData({
-        user_name: '',
-        email: '',
-        department_id: '',
-        position_id: '',
-        role_id: '',
-      });
-  
-      setOpenModal(false);
-  
-      fetchData();
+
     } catch (error) {
       console.error('Error submitting form:', error);
     }
@@ -156,7 +213,9 @@ export const ManagePersonal = () => {
               <Table.Cell>{user.department_name}</Table.Cell>
               <Table.Cell>{user.position_name}</Table.Cell>
               <Table.Cell className='flex gap-x-4'>
-                <Button color='yellow'>Editar</Button>
+                <Button color='yellow' onClick={() => {
+                  fetchFindOne(user.user_id);
+                }}>Editar</Button>
                 <Button color='red'>Eliminar</Button>
               </Table.Cell>
             </Table.Row>
@@ -166,7 +225,7 @@ export const ManagePersonal = () => {
 
       {/* Modal para agregar actividad */}
       <Modal dismissible show={openModal} onClose={() => setOpenModal(false)}>
-        <Modal.Header>Agregar actividad</Modal.Header>
+        <Modal.Header>{isEditing ? 'Editar persona' : 'Agregar persona'}</Modal.Header>
         <Modal.Body>
           <form onSubmit={handleSubmit}>
             <FloatingLabel
@@ -241,7 +300,7 @@ export const ManagePersonal = () => {
 
 
             <Button type="submit" className="mt-5">
-              Registrar proyecto
+              {isEditing ? 'Editar' : 'Registrar'}
             </Button>
           </form>
         </Modal.Body>
