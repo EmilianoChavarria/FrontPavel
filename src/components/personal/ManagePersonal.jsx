@@ -1,9 +1,11 @@
 import { Button, FloatingLabel, Label, Modal, Select, Table } from 'flowbite-react';
 import React, { useState, useEffect } from 'react';
 import { URL } from '../../../environments/global';
+import Swal from 'sweetalert2';
 
 export const ManagePersonal = () => {
   const [data, setData] = useState([]);
+  const [id, setId] = useState();
   const [roles, setRoles] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [departments, setDepartments] = useState([]);
@@ -44,6 +46,7 @@ export const ManagePersonal = () => {
       // setData(result.user);
       console.log(result.user[0]);
       const object = result.user[0];
+      setId(object.id);
       setIsEditing(true);
       openModalHandler();
       setFormData({
@@ -88,6 +91,56 @@ export const ManagePersonal = () => {
     }
   };
 
+  const deleteUser = async (id) => {
+    try {
+      // Mostrar alerta de confirmación
+      const confirmResult = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: '¿Deseas eliminar este usuario?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+      });
+
+      // Si el usuario confirma, proceder con la eliminación
+      if (confirmResult.isConfirmed) {
+        const response = await fetch(`${URL}/deleteUser/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          const errorMessage = await response.text();
+          throw new Error(`Error ${response.status}: ${errorMessage}`);
+        }
+
+        const result = await response.json();
+        console.log("Response: ", result);
+
+        // Mostrar alerta de éxito
+        Swal.fire({
+          title: '¡Éxito!',
+          text: result.message,
+          icon: 'success',
+          confirmButtonText: 'Aceptar'
+        });
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error: ", error.message);
+
+      // Mostrar alerta de error
+      Swal.fire({
+        title: 'Error',
+        text: error.message || 'Ocurrió un error al eliminar el usuario.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      });
+    }
+  };
+
   // Traer los roles
   const fetchPositions = async () => {
     try {
@@ -115,7 +168,7 @@ export const ManagePersonal = () => {
 
     fetchData();
 
-  }, [isEditing]);
+  }, [isEditing, id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -130,8 +183,8 @@ export const ManagePersonal = () => {
     console.log('Form data:', formData);
     try {
       if (isEditing) {
-        const response = await fetch(`${URL}/saveUser`, {
-          method: 'POST',
+        const response = await fetch(`${URL}/updateUser/${id}`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -143,15 +196,15 @@ export const ManagePersonal = () => {
         }
 
         const result = await response.json();
-        console.log('User created successfully:', result);
+        console.log('User updated successfully:', result);
 
-        setFormData({
-          user_name: '',
-          email: '',
-          department_id: '',
-          position_id: '',
-          role_id: '',
-        });
+        // setFormData({
+        //   user_name: '',
+        //   email: '',
+        //   department_id: '',
+        //   position_id: '',
+        //   role_id: '',
+        // });
 
         setOpenModal(false);
 
@@ -216,7 +269,9 @@ export const ManagePersonal = () => {
                 <Button color='yellow' onClick={() => {
                   fetchFindOne(user.user_id);
                 }}>Editar</Button>
-                <Button color='red'>Eliminar</Button>
+                <Button color='red' onClick={() => {
+                  deleteUser(user.user_id);
+                }}>Eliminar</Button>
               </Table.Cell>
             </Table.Row>
           ))}
