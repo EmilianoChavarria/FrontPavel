@@ -462,13 +462,29 @@ export const CategoryCard = ({ category, onCategoryUpdate }) => {
                             <div
                                 key={index}
                                 className="mt-2 border-b border-gray-300 rounded-lg p-2 flex justify-between items-center cursor-pointer text-gray-700 hover:shadow-sm hover:shadow-gray-400"
-                                onClick={() => {
+
+                            >
+                                <span className='text-sm font-medium hover:text-blue-700' onClick={() => {
                                     handleOpenModal();
                                     setActivityObject(activity);
-                                }}
-                            >
-                                <span className='text-sm'>{activity.name}</span>
-                                <span className='text-sm'>%{activity.completion_percentage}</span>
+                                }}>{activity.name}</span>
+                                <button
+                                    id="dropdownMenuIconButton"
+                                    // onClick={toggleDropdown}
+                                    className="inline-flex items-center p-2 text-sm font-medium text-center text-gray-600 bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none dark:text-white focus:ring-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                                    type="button"
+                                >
+                                    <svg
+                                        className="w-4 h-4"
+                                        aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="currentColor"
+                                        viewBox="0 0 4 15"
+                                    >
+                                        <path d="M3.5 1.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 6.041a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 5.959a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                                    </svg>
+                                </button>
+                                
                             </div>
                         ))}
                     </div>
