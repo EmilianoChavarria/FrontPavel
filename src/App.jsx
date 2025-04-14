@@ -9,7 +9,7 @@ function App() {
 
   return (
     <Router className="max-h-screen">
-      <div className="bg-gray-100 h-screen flex flex-col">
+      <div className="bg-blue-100 h-screen flex flex-col">
 
         <Navbar setRefreshProjects={setRefreshProjects} setRefreshCategories={setRefreshCategories} className="flex-shrink-0" />
 

@@ -169,6 +169,7 @@ export const CategoryCard = ({ category, onCategoryUpdate }) => {
 
     // TODO: Controlar el estado del modal
     const handleOpenModal = () => {
+        // console.log(activityObject)
         setOpenActivityOneModal(true);
     };
 
@@ -429,7 +430,7 @@ export const CategoryCard = ({ category, onCategoryUpdate }) => {
                                             href="#"
                                             className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                                         >
-                                            Editar categoría
+                                            Editar etapa
                                         </a>
                                     </li>
                                     <li>
@@ -443,7 +444,7 @@ export const CategoryCard = ({ category, onCategoryUpdate }) => {
                                             href="#"
                                             className="text-red-600 block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                                         >
-                                            Eliminar categoría
+                                            Eliminar etapa
                                         </a>
                                     </li>
                                 </ul>
@@ -466,7 +467,8 @@ export const CategoryCard = ({ category, onCategoryUpdate }) => {
                             >
                                 <span className='text-sm font-medium hover:text-blue-700' onClick={() => {
                                     handleOpenModal();
-                                    setActivityObject(activity);
+                                    setActivityObject(activity.id);
+                                    // console.log(activity);
                                 }}>{activity.name}</span>
                                 <button
                                     id="dropdownMenuIconButton"
@@ -634,7 +636,7 @@ export const CategoryCard = ({ category, onCategoryUpdate }) => {
                         </div>
 
                         <Button type="submit" className="mt-5">
-                            Registrar proyecto
+                            Registrar actividad
                         </Button>
                     </form>
                 </Modal.Body>

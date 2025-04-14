@@ -21,7 +21,7 @@ export const Navbar = ({ setRefreshProjects, setRefreshCategories }) => {
     // Efecto para actualizar el título según la página
     useEffect(() => {
         if (isProjectPage) {
-            setTitle("Categorías del proyecto");
+            setTitle("Etapas del proyecto");
         } else if (isResponsiblePage) {
             setTitle("Gestión de responsables");
         } else {
@@ -157,7 +157,7 @@ export const Navbar = ({ setRefreshProjects, setRefreshCategories }) => {
 
                     </div>
                     {isProjectPage && (
-                        <Button onClick={() => setOpenModalAct(true)}>Agregar nueva categoría</Button>
+                        <Button onClick={() => setOpenModalAct(true)}>Agregar nueva etapa</Button>
 
                     )}
                     {location.pathname === '/' && (
@@ -210,7 +210,7 @@ export const Navbar = ({ setRefreshProjects, setRefreshCategories }) => {
 
                     <Modal dismissible show={openModalAct} onClose={() => setOpenModalAct(false)}>
 
-                        <Modal.Header>Nueva categoría</Modal.Header>
+                        <Modal.Header>Nueva etapa</Modal.Header>
                         <Modal.Body>
                             <form onSubmit={handleCategorySubmit}>
                                 <FloatingLabel variant="outlined" label="Name" name="name" value={formCategoryData.name} onChange={handleCategoryChange} />

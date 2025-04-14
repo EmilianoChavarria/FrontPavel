@@ -19,16 +19,36 @@ export const GanttChart = () => {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
                 const result = await response.json();
-                console.log(result)
-                const projectNewData = result.categories.flatMap(category =>
-                    category.activities.map(activity => ({
-                        TaskID: activity.id,
-                        TaskName: activity.name,
-                        StartDate: moment(activity.start_date).format('MM/DD/YYYY'),
-                        EndDate: moment(activity.end_date).format('MM/DD/YYYY'),
-                        Progress: activity.completion_percentage,
-                    }))
-                );
+                console.log(result);
+
+                // Transformar los datos para el Gantt
+                const projectNewData = result.categories.map((category, index) => {
+                    // Obtener las fechas de inicio y fin de las actividades
+                    const startDates = category.activities.map(activity => moment(activity.start_date));
+                    const endDates = category.activities.map(activity => moment(activity.end_date));
+
+                    // Encontrar la fecha de inicio más temprana y la fecha de fin más tardía
+                    const minStartDate = moment.min(startDates).format('MM/DD/YYYY');
+                    const maxEndDate = moment.max(endDates).format('MM/DD/YYYY');
+
+                    // Mapear las actividades como subtareas
+                    const subtasks = category.activities.map((activity, index) => ({
+                        TaskID: index + 1, // ID de la actividad
+                        TaskName: activity.name, // Nombre de la actividad
+                        StartDate: moment(activity.start_date).format('MM/DD/YYYY'), 
+                        EndDate: moment(activity.end_date).format('MM/DD/YYYY'), 
+                        Progress: activity.completion_percentage, 
+                    }));
+
+                    return {
+                        TaskID: index + 1, 
+                        TaskName: category.name, 
+                        StartDate: minStartDate, 
+                        EndDate: maxEndDate, 
+                        Progress: 0, 
+                        subtasks: subtasks, 
+                    };
+                });
 
                 setData(projectNewData);
                 setProjectData(result);
@@ -50,10 +70,8 @@ export const GanttChart = () => {
         duration: 'Duration',
         progress: 'Progress',
         dependency: 'Predecessor',
-        child: 'subtasks',
+        child: 'subtasks', // Campo que indica las subtareas
     };
-
-    
 
     const splitterSettings = {
         position: '35%',
@@ -63,8 +81,8 @@ export const GanttChart = () => {
     const projectStartDate = projectData ? moment(projectData.start_date).format('MM/DD/YYYY') : null;
     const projectEndDate = projectData ? moment(projectData.end_date).format('MM/DD/YYYY') : null;
 
-    console.log(projectStartDate)
-    console.log(projectEndDate)
+    console.log(projectStartDate);
+    console.log(projectEndDate);
 
     return (
         <div style={{ height: '600px', width: '100%' }}>
@@ -79,6 +97,8 @@ export const GanttChart = () => {
                 splitterSettings={splitterSettings}
                 projectStartDate={projectStartDate}
                 projectEndDate={projectEndDate}
+                enableCollapseAll={true} // Habilita colapsar/expandir todas las tareas
+                toolbar={['ExpandAll', 'CollapseAll']} 
             >
                 <ColumnsDirective>
                     <ColumnDirective field="TaskID" headerText="ID" width="60" />

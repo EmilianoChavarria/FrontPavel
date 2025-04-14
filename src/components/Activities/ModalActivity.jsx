@@ -1,17 +1,17 @@
-import { Badge, Button, Modal, Progress } from 'flowbite-react';
+import { Badge, Button, Modal, Progress, Spinner } from 'flowbite-react';
 import moment from 'moment';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SubactivityRow } from '../SubactivityRow';
 import { URL } from '../../../environments/global';
 import Swal from 'sweetalert2';
 
-
-
 export const ModalActivity = ({ isOpen, onClose, activity }) => {
-
   const [openModal, setOpenModal] = useState(false);
   const [subactivities, setSubactivities] = useState([]);
+  const [newSubactivities, setNewSubactivities] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activityId, setActivityId] = useState(null);
+  const [activityDetails, setActivityDetails] = useState(null);
 
   // Función para obtener las subactividades
   const fetchSubactivities = async (activityId) => {
@@ -23,7 +23,6 @@ export const ModalActivity = ({ isOpen, onClose, activity }) => {
       }
       const data = await response.json();
       setSubactivities(data.subactivities);
-      // console.log(data.subactivities)
     } catch (error) {
       console.error('Error fetching subactivities:', error);
     } finally {
@@ -31,68 +30,225 @@ export const ModalActivity = ({ isOpen, onClose, activity }) => {
     }
   };
 
-  const handleSubactivityStatusChange = async (subactivityId, isChecked) => {
+  const fetchActivityDetails = async (id) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${URL}/findOneActivity/${id}`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setActivityDetails(data.activity[0]);
+    } catch (error) {
+      console.error('Error fetching activity details:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubactivityStatusChange = (subactivityId, isChecked) => {
     const newStatus = isChecked ? 'completada' : 'no completada';
-  
+    
+    if (typeof subactivityId === 'string' && subactivityId.startsWith('new-')) {
+      setNewSubactivities(prev =>
+        prev.map(subactivity =>
+          subactivity.tempId === subactivityId
+            ? { ...subactivity, status: newStatus }
+            : subactivity
+        )
+      );
+    } else {
+      setSubactivities(prev =>
+        prev.map(subactivity =>
+          subactivity.id === subactivityId
+            ? { ...subactivity, status: newStatus }
+            : subactivity
+        )
+      );
+    }
+  };
+
+  const handleSubactivityDeleted = (subactivityId) => {
+    if (typeof subactivityId === 'string' && subactivityId.startsWith('new-')) {
+      setNewSubactivities(prev => prev.filter(s => s.tempId !== subactivityId));
+    } else {
+      setSubactivities(prev => prev.filter(s => s.id !== subactivityId));
+    }
+  };
+
+  const handleAddSubactivity = () => {
+    const tempId = `new-${Date.now()}`;
+    const newSubactivity = {
+      tempId,
+      name: 'Nueva subactividad',
+      status: 'no completada',
+      comment: '',
+      activity_id: activityId,
+    };
+    
+    setNewSubactivities(prev => [...prev, newSubactivity]);
+  };
+
+  const handleSubactivityNameChange = (id, newName) => {
+    if (typeof id === 'string' && id.startsWith('new-')) {
+      setNewSubactivities(prev =>
+        prev.map(subactivity =>
+          subactivity.tempId === id 
+            ? { ...subactivity, name: newName } 
+            : subactivity
+        )
+      );
+    } else {
+      setSubactivities(prev =>
+        prev.map(subactivity =>
+          subactivity.id === id 
+            ? { ...subactivity, name: newName } 
+            : subactivity
+        )
+      );
+    }
+  };
+
+  const handleSubactivityCommentChange = (id, newComment) => {
+    if (typeof id === 'string' && id.startsWith('new-')) {
+      setNewSubactivities(prev =>
+        prev.map(subactivity =>
+          subactivity.tempId === id 
+            ? { ...subactivity, comment: newComment } 
+            : subactivity
+        )
+      );
+    } else {
+      setSubactivities(prev =>
+        prev.map(subactivity =>
+          subactivity.id === id 
+            ? { ...subactivity, comment: newComment } 
+            : subactivity
+        )
+      );
+    }
+  };
+
+  const handleSaveSubactivities = async () => {
+    if (newSubactivities.length === 0) {
+      Swal.fire({
+        title: 'No hay cambios',
+        text: 'No hay nuevas subactividades para guardar.',
+        icon: 'info',
+      });
+      return;
+    }
+
     const result = await Swal.fire({
       title: '¿Estás seguro?',
-      text: `¿Deseas marcar esta subactividad como ${newStatus}?`,
+      text: `¿Deseas guardar ${newSubactivities.length} subactividad(es)?`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: `Sí, ${isChecked ? 'completar' : 'desmarcar'}`,
+      confirmButtonText: 'Sí, guardar',
       cancelButtonText: 'Cancelar',
     });
-  
+
     if (result.isConfirmed) {
+      setIsLoading(true);
       try {
-        const response = await fetch(`${URL}/completeSubactivity/${subactivityId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: newStatus }),
+        // Guardar cada subactividad
+        const savePromises = newSubactivities.map(async (subactivity) => {
+          const response = await fetch(`${URL}/saveSubactivity`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: subactivity.name,
+              status: subactivity.status,
+              comment: subactivity.comment,
+              activity_id: subactivity.activity_id,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
         });
-  
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-  
-        setSubactivities((prev) =>
-          prev.map((subactivity) =>
-            subactivity.id === subactivityId
-              ? { ...subactivity, status: newStatus }
-              : subactivity
-          )
-        );
-  
+
+        await Promise.all(savePromises);
+        
+        // Actualizar la lista de subactividades
+        await fetchSubactivities(activityId);
+        
+        // Limpiar las nuevas subactividades
+        setNewSubactivities([]);
+        
         Swal.fire({
-          title: 'Actualizado',
-          text: `La subactividad ha sido marcada como ${newStatus}.`,
+          title: 'Guardado',
+          text: 'Las subactividades se han guardado correctamente.',
           icon: 'success',
         });
       } catch (error) {
-        console.error('Error al actualizar la subactividad:', error);
+        console.error('Error al guardar subactividades:', error);
         Swal.fire({
           title: 'Error',
-          text: 'No se pudo actualizar la subactividad.',
+          text: 'No se pudieron guardar algunas subactividades.',
           icon: 'error',
         });
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      Swal.fire({
-        title: 'Cancelado',
-        text: 'La subactividad no ha sido modificada.',
-        icon: 'info',
-      });
     }
   };
-  
 
-  const handleSubactivityNameChange = (id, newName) => {
-    const updatedSubactivities = subactivities.map(subactivity =>
-      subactivity.id === id ? { ...subactivity, name: newName } : subactivity
-    );
-    setSubactivities(updatedSubactivities);
+  const handleSaveExistingSubactivities = async () => {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¿Deseas guardar todos los cambios en las subactividades existentes?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, guardar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (result.isConfirmed) {
+      setIsLoading(true);
+      try {
+        // Guardar cambios en subactividades existentes
+        const updatePromises = subactivities.map(async (subactivity) => {
+          const response = await fetch(`${URL}/updateSubactivity/${subactivity.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: subactivity.name,
+              status: subactivity.status,
+              comment: subactivity.comment,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        });
+
+        await Promise.all(updatePromises);
+        
+        Swal.fire({
+          title: 'Actualizado',
+          text: 'Los cambios en las subactividades se han guardado correctamente.',
+          icon: 'success',
+        });
+      } catch (error) {
+        console.error('Error al actualizar subactividades:', error);
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudieron guardar algunos cambios.',
+          icon: 'error',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   const determineBadge = (status) => {
@@ -103,168 +259,188 @@ export const ModalActivity = ({ isOpen, onClose, activity }) => {
     } else if (status === 'finalizado') {
       return { color: 'success', text: 'Finalizado' };
     }
+    return { color: 'gray', text: status };
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      fetchActivityDetails(activity);
+    }
+  }, [isOpen, activity]);
 
-
-  const badgeInfo = determineBadge(activity ? activity.status : 'no empezado');
-
+  const badgeInfo = determineBadge(activityDetails ? activityDetails.status : 'no empezado');
 
   return (
     <>
-      <Modal
-        dismissible // Permite cerrar el modal haciendo clic fuera de él
-        show={isOpen} // Controla si el modal está abierto o cerrado
-        onClose={onClose} // Función que se ejecuta al cerrar el modal
-      >
-        {/* Usar activity.name en el Modal.Header */}
+      <Modal dismissible show={isOpen} onClose={onClose}>
         <Modal.Header>
-          {activity ? activity.name : "Actividad"}
+          {isLoading ? "Cargando..." : activityDetails ? activityDetails.name : "Actividad"}
         </Modal.Header>
         <Modal.Body>
-          <>
-            {activity ? (
+          {isLoading ? (
+            <div className="text-center">
+              <Spinner aria-label="Cargando actividad" size="xl" />
+              <p className="mt-2">Cargando detalles de la actividad...</p>
+            </div>
+          ) : activityDetails ? (
+            <div className="space-y-4">
               <div>
-                <div className='flex flex-col'>
-                  {/* Descripción */}
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Description
-                    </h3>
-                    <p className='mt-1'>
-                      {activity.description}
-                    </p>
-                  </div>
+                <h3 className="text-sm font-medium text-gray-500">Descripción</h3>
+                <p className="mt-1 text-gray-900">{activityDetails.description || 'Sin descripción'}</p>
+              </div>
 
-                  {/* Fechas de inicio y fin */}
-                  <div className="flex gap-6  mt-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">
-                        Fecha de inicio
-                      </h3>
-                      <p className="mt-1">{moment(activity.start_date).format('ll')}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">
-                        Fecha de finalización
-                      </h3>
-                      <p className="mt-1">{moment(activity.end_date).format('ll')}</p>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className='mt-4'>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Estatus
-                    </h3>
-                    <Badge color={badgeInfo.color} size="sm" className='w-fit mt-1'>
-                      {activity.status}
-                    </Badge>
-                  </div>
-
-                  {/* Porcentaje de avance */}
-                  <div className='mt-4'>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      % de avance
-                    </h3>
-                    <Progress progress={activity.completion_percentage} />
-                    <span className='text-sm text-gray-600 mt-1'>
-                      {activity.completion_percentage}%
-                    </span>
-                  </div>
-
-                  {/* Responsable */}
-                  <div className='mt-4'>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Responsable
-                    </h3>
-                    <p className='mt-1'>
-                      {activity.responsible_id}
-                    </p>
-                  </div>
-
-                  {/* Dependencias */}
-                  <div className='mt-4'>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Dependencias
-                    </h3>
-                    <p className='mt-1'>
-                      {activity.dependencies}
-                    </p>
-                  </div>
-
-                  {/* Entregables*/}
-                  <div className='mt-4'>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Entregables
-                    </h3>
-                    <p className='mt-1'>
-                      {activity.deliverables}
-                    </p>
-                  </div>
-
-                  {/* Subactividades */}
-                  <div className='mt-4'>
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Subactividades
-                    </h3>
-                    <Button size="xs" onClick={() => {
-                      setOpenModal(true);
-                      fetchSubactivities(activity.id);
-                    }}>
-                      Ver Subactividades
-                    </Button>
-                  </div>
-
+              <div className="flex gap-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Fecha de inicio</h3>
+                  <p className="mt-1">{moment(activityDetails.start_date).format('LL')}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Fecha de finalización</h3>
+                  <p className="mt-1">{moment(activityDetails.end_date).format('LL')}</p>
                 </div>
               </div>
-            ) : (
-              <p>No hay información de la actividad.</p>
-            )}
-          </>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Estatus</h3>
+                <Badge color={badgeInfo.color} size="sm" className="w-fit mt-1">
+                  {badgeInfo.text}
+                </Badge>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">% de avance</h3>
+                <Progress progress={activityDetails.completion_percentage} className="mt-1" />
+                <span className="text-sm text-gray-600 mt-1">
+                  {activityDetails.completion_percentage}%
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Responsable</h3>
+                <p className="mt-1">{activityDetails.responsible_name || 'No asignado'}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Dependencias</h3>
+                <p className="mt-1">{activityDetails.dependencies || 'Ninguna'}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Entregables</h3>
+                <p className="mt-1">{activityDetails.deliverables || 'Ninguno'}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Subactividades</h3>
+                <Button 
+                  size="xs" 
+                  onClick={() => {
+                    setOpenModal(true);
+                    fetchSubactivities(activityDetails.id);
+                    setActivityId(activityDetails.id);
+                  }}
+                  className="mt-1"
+                >
+                  Ver Subactividades
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p>No se encontró información para esta actividad.</p>
+          )}
         </Modal.Body>
       </Modal>
 
       <Modal
-        dismissible
+        size="4xl"
         show={openModal}
-        onClose={() => setOpenModal(false)}
+        onClose={() => {
+          setOpenModal(false);
+          setNewSubactivities([]);
+        }}
       >
         <Modal.Header>Subactividades</Modal.Header>
         <Modal.Body>
           {isLoading ? (
-            <p>Cargando subactividades...</p>
+            <div className="text-center">
+              <Spinner aria-label="Cargando subactividades" size="xl" />
+              <p className="mt-2">Cargando subactividades...</p>
+            </div>
           ) : (
-            <>
-              <Button size="xs" onClick={() => {
-                subactivities.push({ id: subactivities.length + 1, name: 'Prueba', status: 'no completada', comment: null });
-                setSubactivities([...subactivities]);
-                console.log(subactivities);
-              }}>
-                Agregar Subactividad
-              </Button>
-              <table className="w-full mt-5 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                  <tr>
-                    <th scope="col" className="px-6 py-3">Subactividad</th>
-                    <th scope="col" className="px-6 py-3">Status</th>
-                    <th scope="col" className="px-6 py-3">Comentarios</th>
-                    <th scope="col" className="px-6 py-3">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subactivities.map((subactivity, index) => (
-                    <SubactivityRow
-                    key={subactivity.id}
-                    subactivity={subactivity}
-                    index={index}
-                    handleSubactivityStatusChange={handleSubactivityStatusChange} // Pasar la función aquí
-                    handleSubactivityNameChange={handleSubactivityNameChange}
-                  />
-                  ))}
-                </tbody>
-              </table>
-            </>
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <Button size="sm" onClick={handleAddSubactivity}>
+                  Agregar Subactividad
+                </Button>
+                <div className="flex gap-2">
+                  {newSubactivities.length > 0 && (
+                    <Button 
+                      color="success" 
+                      size="sm" 
+                      onClick={handleSaveSubactivities}
+                    >
+                      Guardar nuevas ({newSubactivities.length})
+                    </Button>
+                  )}
+                  <Button 
+                    color="blue" 
+                    size="sm" 
+                    onClick={handleSaveExistingSubactivities}
+                    disabled={subactivities.length === 0}
+                  >
+                    Guardar cambios existentes
+                  </Button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left text-gray-500">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3">Subactividad</th>
+                      <th scope="col" className="px-6 py-3">Estado</th>
+                      <th scope="col" className="px-6 py-3">Comentarios</th>
+                      <th scope="col" className="px-6 py-3">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subactivities.map((subactivity, index) => (
+                      <SubactivityRow
+                        key={subactivity.id}
+                        subactivity={subactivity}
+                        index={index}
+                        handleSubactivityStatusChange={handleSubactivityStatusChange}
+                        handleSubactivityNameChange={handleSubactivityNameChange}
+                        handleSubactivityCommentChange={handleSubactivityCommentChange}
+                        handleSubactivityDeleted={handleSubactivityDeleted}
+                      />
+                    ))}
+                    {newSubactivities.map((subactivity, index) => (
+                      <SubactivityRow
+                        key={subactivity.tempId}
+                        subactivity={{
+                          ...subactivity,
+                          id: subactivity.tempId,
+                        }}
+                        index={subactivities.length + index}
+                        handleSubactivityStatusChange={handleSubactivityStatusChange}
+                        handleSubactivityNameChange={handleSubactivityNameChange}
+                        handleSubactivityCommentChange={handleSubactivityCommentChange}
+                        handleSubactivityDeleted={handleSubactivityDeleted}
+                        isNew={true}
+                      />
+                    ))}
+                    {subactivities.length === 0 && newSubactivities.length === 0 && (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                          No hay subactividades registradas
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </Modal.Body>
       </Modal>

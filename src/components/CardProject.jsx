@@ -200,25 +200,6 @@ export const CardProject = ({ project, onProjectUpdate }) => {
     };
 
 
-    //Preguntar a Pavel si quiere "Completado con retraso" o "Atrasado"
-
-    // const determineBadge = (endDate, percentage) => {
-    //     const currentDate = moment();
-    //     const finalDate = moment(endDate);
-    //     console.log(finalDate)
-    //     if (percentage >= 100) {
-    //         if (finalDate.isBefore(currentDate, 'day')) {
-    //             return { color: "warning", text: "Completado con retraso", icon: HiClock };
-    //         } else {
-    //             return { color: "success", text: "Completado", icon: HiCheck };
-    //         }
-    //     } else if (finalDate.isBefore(currentDate, 'day')) {
-    //         return { color: "failure", text: "Atrasado", icon: HiClock };
-    //     } else if (finalDate.isSameOrAfter(currentDate, 'day')) {
-    //         return { color: "warning", text: "En proceso", icon: HiClock };
-    //     }
-    // };
-
     const determineBadge = (endDate, percentage) => {
         const currentDate = moment();
         const finalDate = moment(endDate);
@@ -259,7 +240,7 @@ export const CardProject = ({ project, onProjectUpdate }) => {
     return (
         <>
 
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow p-5 cursor-pointer">
+            <div className="bg-white border border-gray-200 rounded-lg h-fit overflow-hidden hover:shadow-md transition-shadow p-5 cursor-pointer">
                 <div className="flex flex-col">
                     <div className="flex justify-between items-center">
                         <Link to={`/project/${project.id}`} onClick={() => {
@@ -305,6 +286,20 @@ export const CardProject = ({ project, onProjectUpdate }) => {
                                                 className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                                             >
                                                 Editar información
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a onClick={() => {
+                                                toggleDropdown;
+
+                                            }
+
+                                            }
+                                            target="_blank"
+                                                href={`/gantt/${project.id}`}
+                                                className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                                            >
+                                                Ver Gantt
                                             </a>
                                         </li>
                                         <li>

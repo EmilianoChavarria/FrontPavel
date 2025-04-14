@@ -8,7 +8,7 @@ export const CardActivity = ({ activity }) => {
         <Accordion.Panel >
             <Accordion.Title>{activity.name}</Accordion.Title>
             <Accordion.Content>
-                <div className='flex flex-col'>
+                {/* <div className='flex flex-col'>
                     <span className='text-sm text-gray-500 mt-1 font-medium'>{activity.description}</span>
                     <span className='text-sm text-gray-500 mt-1 flex font-medium' >
 
@@ -25,7 +25,7 @@ export const CardActivity = ({ activity }) => {
                             {activity.dependencies}
                         </span>
                     </span>
-                </div>
+                </div> */}
 
             </Accordion.Content>
         </Accordion.Panel>
