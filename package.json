@@ -12,6 +12,7 @@
   "dependencies": {
     "@syncfusion/ej2-base": "^28.1.33",
     "@syncfusion/ej2-react-gantt": "^28.1.41",
+    "date-fns": "^4.1.0",
     "flowbite-react": "^0.10.2",
     "framer-motion": "^12.0.1",
     "moment": "^2.30.1",
