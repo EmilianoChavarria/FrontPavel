@@ -573,7 +573,7 @@ export const CategoryCard = ({ category, onCategoryUpdate }) => {
                             >
                                 <option value="" disabled>Seleccione un responsable</option>
                                 {responsibles.map((responsible) => (
-                                    <option key={responsible.user_id} value={responsible.user_id}>{responsible.user_name} | {responsible.position_name} | {responsible.department_name}</option>
+                                    <option key={responsible.id} value={responsible.id}>{responsible.user_name} | {responsible.position_name} | {responsible.department_name}</option>
                                 ))}
                             </Select>
 

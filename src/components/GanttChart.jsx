@@ -1,7 +1,75 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { format, differenceInDays, addDays, parse, getMonth, getYear, startOfMonth, endOfMonth, isSameMonth } from 'date-fns';
 
-export const GanttChart = () => {
+export const GanttChart = ({ data =
+    {
+        "id": 5,
+        "name": "Prueba",
+        "description": "asd",
+        "start_date": "2025-04-01",
+        "end_date": "2025-06-30",
+        "completion_percentage": "0.00",
+        "categories": [
+            {
+                "id": 5,
+                "project_id": 5,
+                "name": "Primera catergoria",
+                "description": "asd",
+                "activities": [
+                    {
+                        "id": 19,
+                        "category_id": 5,
+                        "name": "Actividad1",
+                        "description": "asd",
+                        "start_date": "2025-04-10",
+                        "end_date": "2025-04-30",
+                        "status": "en proceso",
+                        "responsible_id": 2,
+                        "dependencies": "asd",
+                        "deliverables": "asd, asd, aqwe",
+                        "completion_percentage": "33.33",
+                        "responsible_name": "Pavela Chavarr\u00eda"
+                    },
+                    {
+                        "id": 29,
+                        "category_id": 5,
+                        "name": "prueba",
+                        "description": "asd",
+                        "start_date": "2025-04-08",
+                        "end_date": "2025-05-02",
+                        "status": "no empezado",
+                        "responsible_id": 2,
+                        "dependencies": "asd",
+                        "deliverables": "asd",
+                        "completion_percentage": "33.33",
+                        "responsible_name": "Pavela Chavarr\u00eda"
+                    }
+                ]
+            },
+            {
+                "id": 6,
+                "project_id": 5,
+                "name": "segunda",
+                "description": "asd",
+                "activities": [
+                    {
+                        "id": 20,
+                        "category_id": 6,
+                        "name": "act1 cat 2",
+                        "description": "asd",
+                        "start_date": "2025-04-08",
+                        "end_date": "2025-05-01",
+                        "status": "en proceso",
+                        "responsible_id": 2,
+                        "dependencies": "asdasd",
+                        "deliverables": "asd, asd",
+                        "completion_percentage": "50.00",
+                        "responsible_name": "Pavela Chavarr\u00eda"
+                    }
+                ]
+            }
+        ]
+    } }) => {
     // Estado para el ancho de las columnas
     const [columnWidth, setColumnWidth] = useState(320);
     const [isDragging, setIsDragging] = useState(false);
@@ -9,62 +77,86 @@ export const GanttChart = () => {
     const sidebarRef = useRef(null);
     const startXRef = useRef(0);
     const startWidthRef = useRef(0);
+    const [expandedCategories, setExpandedCategories] = useState({});
+    const [hoveredActivityId, setHoveredActivityId] = useState(null);
 
-    // Ancho fijo para cada día (en píxeles)
+
+    // Constantes de dimensiones
     const ANCHO_DIA = 24;
+    const ALTURA_FILA = 35;
+    const ALTURA_BARRA = 16;
+    const ALTURA_CATEGORIA = 40;
 
-    // Fechas del proyecto configuradas manualmente
-    const [fechaInicioProyecto, setFechaInicioProyecto] = useState(parse('20/04/2025', 'dd/MM/yyyy', new Date()));
-    const [fechaFinProyecto, setFechaFinProyecto] = useState(parse('30/06/2025', 'dd/MM/yyyy', new Date()));
-
-    // Columnas configurables
-    const [columnas, setColumnas] = useState([
-        { id: 'nombre', nombre: 'Tarea', width: 'w-48' },
-        { id: 'fechaInicio', nombre: 'Inicio', width: 'w-24' },
-        { id: 'fechaFin', nombre: 'Fin', width: 'w-24' },
-        { id: 'porcentaje', nombre: '%', width: 'w-16' },
-        { id: 'estado', nombre: 'Estado', width: 'w-32' }
-    ]);
-
-    // Datos de ejemplo con fechas y porcentajes
-    const [actividades, setActividades] = useState([
-        {
-            id: 1,
-            nombre: 'Análisis de requerimientos',
-            fechaInicio: '22/04/2025',
-            fechaFin: '25/04/2025',
-            porcentaje: 80,
-            estado: 'En progreso',
-            color: 'bg-blue-500'
-        },
-        {
-            id: 2,
-            nombre: 'Diseño de interfaz',
-            fechaInicio: '25/04/2025',
-            fechaFin: '28/04/2025',
-            porcentaje: 30,
-            estado: 'Pendiente',
-            color: 'bg-green-500'
-        },
-        {
-            id: 3,
-            nombre: 'Implementación',
-            fechaInicio: '28/04/2025',
-            fechaFin: '30/04/2025',
-            porcentaje: 20,
-            estado: 'Pendiente',
-            color: 'bg-purple-500'
-        }
-    ]);
-
-    // Convertir fechas string a objetos Date
-    const parseDate = (dateString) => {
-        return parse(dateString, 'dd/MM/yyyy', new Date());
+    // Procesar los datos del response
+    const projectData = data || {
+        start_date: "2025-03-05",
+        end_date: "2025-06-30",
+        categories: []
     };
 
-    // Calcular duración en días
-    const calcularDuracion = (inicio, fin) => {
-        return differenceInDays(parseDate(fin), parseDate(inicio)) + 1;
+    // Convertir fechas string a objetos Date
+    const parseApiDate = (dateString) => {
+        return parse(dateString, 'yyyy-MM-dd', new Date());
+    };
+
+    const [fechaInicioProyecto, setFechaInicioProyecto] = useState(parseApiDate(projectData.start_date));
+    const [fechaFinProyecto, setFechaFinProyecto] = useState(parseApiDate(projectData.end_date));
+
+
+    const handleActivityHover = (activityId) => {
+        setHoveredActivityId(activityId);
+    };
+
+    const handleActivityHoverEnd = () => {
+        setHoveredActivityId(null);
+    };
+
+    // Preparar los datos de categorías y actividades
+    const [categorias, setCategorias] = useState(
+        projectData.categories.map(categoria => {
+            // Calcular fechas de categoría basadas en sus actividades
+            let fechaInicioCategoria = null;
+            let fechaFinCategoria = null;
+
+            if (categoria.activities && categoria.activities.length > 0) {
+                const fechasInicio = categoria.activities.map(a => parseApiDate(a.start_date));
+                const fechasFin = categoria.activities.map(a => parseApiDate(a.end_date));
+
+                fechaInicioCategoria = new Date(Math.min(...fechasInicio.map(date => date.getTime())));
+                fechaFinCategoria = new Date(Math.max(...fechasFin.map(date => date.getTime())));
+            } else {
+                // Si no hay actividades, usar las fechas del proyecto
+                fechaInicioCategoria = fechaInicioProyecto;
+                fechaFinCategoria = fechaFinProyecto;
+            }
+
+            return {
+                ...categoria,
+                fechaInicio: fechaInicioCategoria,
+                fechaFin: fechaFinCategoria,
+                color: getRandomColor(),
+                actividades: categoria.activities.map(actividad => ({
+                    ...actividad,
+                    fechaInicio: parseApiDate(actividad.start_date),
+                    fechaFin: parseApiDate(actividad.end_date),
+                    color: getRandomColor()
+                }))
+            };
+        })
+    );
+
+    // Función para generar colores aleatorios
+    function getRandomColor() {
+        const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-yellow-500', 'bg-red-500', 'bg-indigo-500'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Toggle para expandir/colapsar categorías
+    const toggleCategory = (categoryId) => {
+        setExpandedCategories(prev => ({
+            ...prev,
+            [categoryId]: !prev[categoryId]
+        }));
     };
 
     // Calcular el total de días del proyecto
@@ -78,9 +170,6 @@ export const GanttChart = () => {
     // Función para agrupar los días por meses
     const getMesesEnRango = () => {
         const meses = [];
-        let currentMonth = getMonth(fechaInicioProyecto);
-        let currentYear = getYear(fechaInicioProyecto);
-
         let startDate = fechaInicioProyecto;
         let endDate = fechaFinProyecto;
 
@@ -108,13 +197,13 @@ export const GanttChart = () => {
     const mesesEnRango = getMesesEnRango();
 
     // Calcular posición izquierda y ancho para cada barra (en píxeles)
-    const calcularPosicionBarra = (fechaInicio) => {
-        const diasDesdeInicio = differenceInDays(parseDate(fechaInicio), fechaInicioProyecto);
+    const calcularPosicionBarra = (fecha) => {
+        const diasDesdeInicio = differenceInDays(fecha, fechaInicioProyecto);
         return diasDesdeInicio * ANCHO_DIA;
     };
 
     const calcularAnchoBarra = (fechaInicio, fechaFin) => {
-        const duracion = calcularDuracion(fechaInicio, fechaFin);
+        const duracion = differenceInDays(fechaFin, fechaInicio) + 1;
         return duracion * ANCHO_DIA;
     };
 
@@ -196,27 +285,6 @@ export const GanttChart = () => {
                     <button className="px-3 py-1 text-sm border rounded flex items-center">
                         <span className="mr-1">+</span> Añadir tarea
                     </button>
-
-                    {/* Controles para fechas del proyecto */}
-                    <div className="flex items-center ml-4 space-x-2">
-                        <label className="text-sm">Inicio Proyecto:</label>
-                        <input
-                            type="text"
-                            value={format(fechaInicioProyecto, 'dd/MM/yyyy')}
-                            onChange={(e) => handleFechaProyectoChange('inicio', e)}
-                            className="w-24 px-2 py-1 text-sm border rounded"
-                            placeholder="dd/mm/yyyy"
-                        />
-
-                        <label className="text-sm ml-2">Fin Proyecto:</label>
-                        <input
-                            type="text"
-                            value={format(fechaFinProyecto, 'dd/MM/yyyy')}
-                            onChange={(e) => handleFechaProyectoChange('fin', e)}
-                            className="w-24 px-2 py-1 text-sm border rounded"
-                            placeholder="dd/mm/yyyy"
-                        />
-                    </div>
                 </div>
             </div>
 
@@ -225,42 +293,81 @@ export const GanttChart = () => {
                 {/* Columnas laterales */}
                 <div
                     ref={sidebarRef}
-                    className={`${isVisible ? 'flex' : 'hidden'} flex flex-col border-r overflow-hidden`}
+                    className={`${isVisible ? 'flex' : 'hidden'} flex-col border-r overflow-hidden`}
                     style={{ width: `${columnWidth}px`, minWidth: '200px' }}
                 >
                     {/* Encabezados de columnas */}
                     <div className="flex items-center justify-center border-b h-16">
-                        {columnas.map((col, index) => (
-                            <div
-                                key={col.id}
-                                draggable
-                                onDragStart={(e) => handleColumnDragStart(e, index)}
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, index)}
-                                onDragEnd={handleDragEnd}
-                                className={`${col.width} p-2 font-medium text-sm cursor-move hover:bg-gray-100 flex`}
-
-                            >
-                                <svg className='h-4 w-4' fill="#d6d6d6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" enableBackground="new 0 0 52 52" xmlSpace="preserve" stroke="#8f8f8f"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M20,4c2.2,0,4,1.8,4,4s-1.8,4-4,4s-4-1.8-4-4S17.8,4,20,4z M32,4c2.2,0,4,1.8,4,4 s-1.8,4-4,4s-4-1.8-4-4S29.8,4,32,4z M20,16c2.2,0,4,1.8,4,4s-1.8,4-4,4s-4-1.8-4-4S17.8,16,20,16z M32,16c2.2,0,4,1.8,4,4 s-1.8,4-4,4s-4-1.8-4-4S29.8,16,32,16z M20,28c2.2,0,4,1.8,4,4s-1.8,4-4,4s-4-1.8-4-4S17.8,28,20,28z M32,28c2.2,0,4,1.8,4,4 s-1.8,4-4,4s-4-1.8-4-4S29.8,28,32,28z M20,40c2.2,0,4,1.8,4,4s-1.8,4-4,4s-4-1.8-4-4S17.8,40,20,40z M32,40c2.2,0,4,1.8,4,4 s-1.8,4-4,4s-4-1.8-4-4S29.8,40,32,40z"></path> </g> </g></svg>
-                                {col.nombre}
-                            </div>
-                        ))}
+                        <div className="w-48 p-2 font-medium text-sm">Nombre de tarea</div>
+                        <div className="w-24 p-2 font-medium text-sm">Inicio</div>
+                        <div className="w-24 p-2 font-medium text-sm">Fin</div>
                     </div>
 
                     {/* Contenido de las columnas */}
                     <div className="overflow-y-auto">
-                        {actividades.map((act) => (
-                            <div key={act.id} className="flex border-b">
-                                {columnas.map(col => (
+                        {categorias.map((categoria) => (
+                            <React.Fragment key={categoria.id}>
+                                {/* Fila de categoría */}
+                                <div
+                                    className="flex border-b items-center cursor-pointer hover:bg-gray-50"
+                                    style={{ height: `${ALTURA_CATEGORIA}px` }}
+                                    onClick={() => toggleCategory(categoria.id)}
+                                >
+                                    <div className="w-48 p-2 text-sm font-medium flex items-center">
+                                        <svg
+                                            className={`w-4 h-4 mr-1 transform transition-transform ${expandedCategories[categoria.id] ? 'rotate-90' : ''}`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        {categoria.name}
+                                    </div>
+                                    <div className="w-24 p-2 text-sm">
+                                        {format(categoria.fechaInicio, 'dd/MM/yyyy')}
+                                    </div>
+                                    <div className="w-24 p-2 text-sm">
+                                        {format(categoria.fechaFin, 'dd/MM/yyyy')}
+                                    </div>
+                                </div>
+
+                                {/* Actividades (si la categoría está expandida) */}
+                                {expandedCategories[categoria.id] && categoria.actividades.map((actividad) => (
                                     <div
-                                        key={`${act.id}-${col.id}`}
-                                        className={`${col.width} p-2 text-sm truncate ${col.id === 'porcentaje' ? 'text-right' : ''
-                                            }`}
+                                        key={actividad.id}
+                                        className="flex border-b bg-gray-50 relative group"
+                                        style={{ height: `${ALTURA_FILA}px` }}
+                                        onMouseEnter={() => handleActivityHover(actividad.id)}
+                                        onMouseLeave={handleActivityHoverEnd}
+                                        onDoubleClick={() => handleActivityDoubleClick(actividad)}
                                     >
-                                        {col.id === 'porcentaje' ? `${act.porcentaje}%` : act[col.id]}
+                                        <div className="w-48 p-2 text-sm pl-8">{actividad.name}</div>
+                                        <div className="w-24 p-2 text-sm">
+                                            {format(actividad.fechaInicio, 'dd/MM/yyyy')}
+                                        </div>
+                                        <div className="w-24 p-2 text-sm">
+                                            {format(actividad.fechaFin, 'dd/MM/yyyy')}
+                                        </div>
+
+                                        {/* Botón que aparece en hover */}
+                                        {hoveredActivityId === actividad.id && (
+                                            <button
+                                                className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-gray-50 text-white  rounded text-xs hover:bg-gray-200 h-fit w-fit"
+                                                onClick={() => alert(`Actividad: ${actividad}`)}
+                                            >
+                                                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                    <path stroke="currentColor" stroke-width="1" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z" />
+                                                    <path stroke="currentColor" stroke-width="1" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                </svg>
+
+
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
-                            </div>
+                            </React.Fragment>
                         ))}
                     </div>
                 </div>
@@ -271,21 +378,11 @@ export const GanttChart = () => {
                     onMouseDown={handleResizeStart}
                     style={{ cursor: isDragging ? 'col-resize' : '' }}
                 >
-                    <button onClick={() => {
-                        setIsVisible(!isVisible);
-                    }} className={`${isVisible ? 'ml-1' : 'ml-6'} whitespace-nowrap bg-gray-500 text-white z-10 hover:bg-gray-400`}>
-                        {!isVisible &&
-                            <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 12H5m14 0-4 4m4-4-4-4" />
-                            </svg>
-                        }
-
-                        {isVisible &&
-                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4" />
-                            </svg>
-
-                        }
+                    <button
+                        onClick={() => setIsVisible(!isVisible)}
+                        className={`${isVisible ? 'ml-1' : 'ml-6'}  whitespace-nowrap bg-gray-500 text-white z-10 hover:bg-gray-400`}
+                    >
+                        {!isVisible ? '▶' : '◀'}
                     </button>
                 </div>
 
@@ -343,38 +440,99 @@ export const GanttChart = () => {
                             ))}
                         </div>
 
-                        {/* Barras del Gantt con progreso */}
-                        {actividades.map((act, i) => {
-                            const left = calcularPosicionBarra(act.fechaInicio);
-                            const width = calcularAnchoBarra(act.fechaInicio, act.fechaFin);
-                            const progressWidth = (act.porcentaje / 100) * width;
+                        {/* Línea vertical para "hoy" si está dentro del rango */}
+                        {(differenceInDays(new Date(), fechaInicioProyecto) >= 0 &&
+                            differenceInDays(new Date(), fechaFinProyecto) <= 0 && (
+                                <div
+                                    className="absolute top-0 h-full w-px bg-red-500 z-20"
+                                    style={{
+                                        left: `${differenceInDays(new Date(), fechaInicioProyecto) * ANCHO_DIA}px`
+                                    }}
+                                >
+                                    <div className="absolute top-0 left-[0.95rem] transform -translate-x-1/2 bg-red-500 text-white text-xs px-1 rounded-b whitespace-nowrap">
+                                        Hoy
+                                    </div>
+                                </div>
+                            )
+                        )}
+
+                        {/* Barras del Gantt */}
+                        {categorias.map((categoria, catIndex) => {
+                            // Calcular posición vertical acumulada
+                            let verticalOffset = 0;
+                            for (let i = 0; i < catIndex; i++) {
+                                verticalOffset += ALTURA_CATEGORIA;
+                                if (expandedCategories[categorias[i].id]) {
+                                    verticalOffset += categorias[i].actividades.length * ALTURA_FILA;
+                                }
+                            }
+
+                            const catLeft = calcularPosicionBarra(categoria.fechaInicio);
+                            const catWidth = calcularAnchoBarra(categoria.fechaInicio, categoria.fechaFin);
 
                             return (
-                                <div
-                                    key={`gantt-${act.id}`}
-                                    className="absolute h-8 flex items-center"
-                                    style={{ top: `${i * 40}px`, left: 0, width: '100%' }}
-                                >
-                                    {/* Barra completa (fondo) */}
+                                <React.Fragment key={`cat-${categoria.id}`}>
+                                    {/* Barra de categoría */}
                                     <div
-                                        className={`absolute h-4 rounded ${act.color} opacity-20`}
+                                        className="absolute flex items-center"
                                         style={{
-                                            left: `${left}px`,
-                                            width: `${width}px`,
+                                            top: `${verticalOffset + (ALTURA_CATEGORIA / 2) - (ALTURA_BARRA / 2)}px`,
+                                            left: 0,
+                                            width: '100%',
+                                            height: `${ALTURA_BARRA}px`
                                         }}
-                                    ></div>
+                                    >
+                                        <div
+                                            className={`absolute h-full rounded-lg ${categoria.color} opacity-80`}
+                                            style={{
+                                                left: `${catLeft}px`,
+                                                width: `${catWidth}px`,
+                                            }}
+                                        ></div>
+                                    </div>
 
-                                    {/* Progreso (porcentaje completado) */}
-                                    <div
-                                        className={`absolute h-4 rounded-l ${act.color}`}
-                                        style={{
-                                            left: `${left}px`,
-                                            width: `${progressWidth}px`,
-                                        }}
-                                    ></div>
+                                    {/* Barras de actividades (si la categoría está expandida) */}
+                                    {expandedCategories[categoria.id] && categoria.actividades.map((actividad, actIndex) => {
+                                        const actTop = verticalOffset + ALTURA_CATEGORIA + (actIndex * ALTURA_FILA) + (ALTURA_FILA / 2) - (ALTURA_BARRA / 2);
+                                        const actLeft = calcularPosicionBarra(actividad.fechaInicio);
+                                        const actWidth = calcularAnchoBarra(actividad.fechaInicio, actividad.fechaFin);
+                                        const progressWidth = (actividad.completion_percentage / 100) * actWidth;
 
-                                    
-                                </div>
+                                        return (
+                                            <div
+                                                key={`act-${actividad.id}`}
+                                                className="absolute flex items-center"
+                                                style={{
+                                                    top: `${actTop}px`,
+                                                    left: 0,
+                                                    width: '100%',
+                                                    height: `${ALTURA_BARRA}px`
+                                                }}
+                                            >
+                                                {/* Barra completa (fondo) */}
+                                                <div
+                                                    className={`absolute h-full rounded ${actividad.color} opacity-20`}
+                                                    style={{
+                                                        left: `${actLeft}px`,
+                                                        width: `${actWidth}px`,
+                                                    }}
+                                                    onDoubleClick={() => {
+                                                        alert(`Actividad: ${actividad.name}`);
+                                                    }}
+                                                ></div>
+
+                                                {/* Progreso (porcentaje completado) */}
+                                                <div
+                                                    className={`absolute h-full rounded-l ${actividad.color}`}
+                                                    style={{
+                                                        left: `${actLeft}px`,
+                                                        width: `${progressWidth}px`,
+                                                    }}
+                                                ></div>
+                                            </div>
+                                        );
+                                    })}
+                                </React.Fragment>
                             );
                         })}
                     </div>

@@ -28,6 +28,7 @@ export const ManagePersonal = () => {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
       const result = await response.json();
+      // console.log(result)
       setData(result.users);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -263,14 +264,14 @@ export const ManagePersonal = () => {
                 {user.user_name}
               </Table.Cell>
               <Table.Cell>{user.email}</Table.Cell>
-              <Table.Cell>{user.department_name}</Table.Cell>
+              <Table.Cell>{user.departmnet_name}</Table.Cell>
               <Table.Cell>{user.position_name}</Table.Cell>
               <Table.Cell className='flex gap-x-4'>
                 <Button color='yellow' onClick={() => {
-                  fetchFindOne(user.user_id);
+                  fetchFindOne(user.id);
                 }}>Editar</Button>
                 <Button color='red' onClick={() => {
-                  deleteUser(user.user_id);
+                  deleteUser(user.id);
                 }}>Eliminar</Button>
               </Table.Cell>
             </Table.Row>
